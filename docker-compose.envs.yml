@@ -1,0 +1,25 @@
+version: '3.8'
+services:
+  app_dev:
+    build: .
+    environment:
+      - ENV=dev
+      - PORT=3001
+    ports:
+      - "3001:3000"
+
+  app_qa:
+    build: .
+    environment:
+      - ENV=qa
+      - PORT=3002
+    ports:
+      - "3002:3000"
+
+  app_uat:
+    build: .
+    environment:
+      - ENV=uat
+      - PORT=3003
+    ports:
+      - "3003:3000"
