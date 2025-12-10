@@ -4,7 +4,7 @@ const port = process.env.PORT || 3000;
 
 
 app.get('/', (req, res) => {
-res.json({ message: `Hi from ${process.env.ENV || 'local'} environment` });
+res.json({ message: `Hi from ${process.env.ENV || 'local'} environment. This update one` });
 });
 
 
