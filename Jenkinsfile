@@ -6,7 +6,7 @@ pipeline {
   }
 
   tools {
-    nodejs 'NodeJS 20' // Make sure this matches your NodeJS installation in Jenkins
+    nodejs 'NodeJS 20'
   }
 
   stages {
@@ -19,7 +19,6 @@ pipeline {
     stage('Prepare') {
       steps {
         script {
-          // Make branch/tag safe for later use
           env.BRANCH_SAFE = env.BRANCH_NAME ?: 'local'
           env.TAG = env.BRANCH_SAFE.replaceAll('[^a-zA-Z0-9_.-]', '_')
           echo "Branch: ${env.BRANCH_SAFE}, TAG: ${env.TAG}"
@@ -29,12 +28,12 @@ pipeline {
 
     stage('Install & Test') {
       steps {
-        dir('app') { // npm commands run in app folder
+        dir('app') {
           script {
             echo "Installing dependencies and running tests"
             sh 'npm install'
             sh 'mkdir -p test-results'
-            sh 'npm test || true' // continue even if tests fail
+            sh 'npm test || true'
           }
         }
       }
@@ -57,27 +56,31 @@ pipeline {
           def branch = env.BRANCH_SAFE
           echo "Deploying for branch ${branch}"
 
-          if (branch == 'main' || branch ==~ /release\/.*/) {
+          if (branch == 'main') {
             echo "Deploying to UAT"
             sh "docker rm -f app_uat || true"
             sh "docker run -d --name app_uat -e ENV=uat -p 3003:3000 ${IMAGE_NAME}:${TAG}"
+
           } else if (branch == 'develop') {
             echo "Deploying to Dev"
             sh "docker rm -f app_dev || true"
             sh "docker run -d --name app_dev -e ENV=dev -p 3001:3000 ${IMAGE_NAME}:${TAG}"
+
           } else if (branch ==~ /feature\/.*/ || branch == 'feature') {
             echo "Deploying to QA (feature branch)"
             def safeName = branch.replaceAll('[^a-zA-Z0-9]', '_')
             sh "docker rm -f app_${safeName} || true"
             sh "docker run -d --name app_${safeName} -e ENV=qa -p 3002:3000 ${IMAGE_NAME}:${TAG}"
+
           } else if (branch ==~ /hotfix\/.*/ ) {
             echo "Deploying hotfix to QA and UAT"
             sh "docker rm -f app_qa || true"
             sh "docker run -d --name app_qa -e ENV=qa -p 3002:3000 ${IMAGE_NAME}:${TAG}"
             sh "docker rm -f app_uat || true"
             sh "docker run -d --name app_uat -e ENV=uat -p 3003:3000 ${IMAGE_NAME}:${TAG}"
+
           } else {
-            echo "Unrecognized branch pattern — defaulting to Dev"
+            echo "Unrecognized branch — Defaulting to Dev"
             sh "docker rm -f app_dev || true"
             sh "docker run -d --name app_dev -e ENV=dev -p 3001:3000 ${IMAGE_NAME}:${TAG}"
           }
