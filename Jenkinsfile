@@ -51,23 +51,6 @@ pipeline {
       }
     }
 
-    stage('Push (optional)') {
-      when {
-        expression {
-          def b = env.BRANCH_SAFE
-          return (b ==~ /main/ || b ==~ /release\\/.*|release.*/ )
-        }
-      }
-      steps {
-        echo 'Push to registry step (configure credentials & registry)'
-        // withCredentials([usernamePassword(credentialsId: 'my-registry-creds', usernameVariable: 'REG_USER', passwordVariable: 'REG_PW')]) {
-        //   sh "docker login -u $REG_USER -p $REG_PW myregistry.example.com"
-        //   sh "docker tag ${IMAGE_NAME}:${TAG} myregistry.example.com/${IMAGE_NAME}:${TAG}"
-        //   sh "docker push myregistry.example.com/${IMAGE_NAME}:${TAG}"
-        // }
-      }
-    }
-
     stage('Deploy to environment') {
       steps {
         script {
@@ -79,14 +62,14 @@ pipeline {
             sh "docker rm -f app_uat || true"
             sh "docker run -d --name app_uat -e ENV=uat -p 3003:3000 ${IMAGE_NAME}:${TAG}"
           } else if (branch == 'develop') {
-            echo "Deploying to QA"
-            sh "docker rm -f app_qa || true"
-            sh "docker run -d --name app_qa -e ENV=qa -p 3002:3000 ${IMAGE_NAME}:${TAG}"
+            echo "Deploying to Dev"
+            sh "docker rm -f app_dev || true"
+            sh "docker run -d --name app_dev -e ENV=dev -p 3001:3000 ${IMAGE_NAME}:${TAG}"
           } else if (branch ==~ /feature\/.*/ || branch == 'feature') {
-            echo "Deploying to Dev (feature branch)"
+            echo "Deploying to QA (feature branch)"
             def safeName = branch.replaceAll('[^a-zA-Z0-9]', '_')
             sh "docker rm -f app_${safeName} || true"
-            sh "docker run -d --name app_${safeName} -e ENV=dev -p 3001:3000 ${IMAGE_NAME}:${TAG}"
+            sh "docker run -d --name app_${safeName} -e ENV=qa -p 3002:3000 ${IMAGE_NAME}:${TAG}"
           } else if (branch ==~ /hotfix\/.*/ ) {
             echo "Deploying hotfix to QA and UAT"
             sh "docker rm -f app_qa || true"
