@@ -75,7 +75,7 @@ pipeline {
           } else if (branch ==~ /hotfix\/.*/ ) {
             echo "Deploying hotfix to QA"
             sh "docker rm -f app_qa || true"
-            sh "docker run -d --name app_qa -e ENV=qa -p 3004:3000 ${IMAGE_NAME}:${TAG}"
+            sh "docker run -d --name app_qa -e ENV=qa -p 3002:3000 ${IMAGE_NAME}:${TAG}"
 
           } else {
             echo "Unrecognized branch — Defaulting to Dev"
